@@ -1,5 +1,5 @@
 import datetime
-import warnings
+import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -7,8 +7,7 @@ from typing import Literal
 
 import numpy as np
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.filterwarnings("ignore", category=UserWarning)
+LOG = logging.getLogger(__name__)
 
 
 # ── Model configuration ───────────────────────────────────────────────────────
@@ -175,8 +174,7 @@ def _fetch_fields(ekd, ekr, date, param, levelist=None, number=None, **kwargs) -
         )
         for f in dataset:
             assert f.to_numpy().shape == (721, 1440), (
-                f"Unexpected grid shape for {f.metadata('param')}: "
-                f"{f.to_numpy().shape}"
+                f"Unexpected grid shape for {f.metadata('param')}: {f.to_numpy().shape}"
             )
             values = np.roll(f.to_numpy(), -f.shape[1] // 2, axis=1)
             values = ekr.interpolate(values, {"grid": (0.25, 0.25)}, {"grid": "N320"})
@@ -257,7 +255,7 @@ def _build_fields(
             if var in fields:
                 fields[var][:, ocean_mask] = np.nan
     except Exception:
-        pass
+        LOG.warning("Failed to apply land-sea mask: lsm.grib not found or invalid")
 
     for level in cfg.levels:
         gh = fields.pop(f"gh_{level}", None)

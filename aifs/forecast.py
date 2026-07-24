@@ -14,9 +14,9 @@ DEFAULT_CHECKPOINT = "aifs-single-2.0"
 
 CHECKPOINTS = {
     DEFAULT_CHECKPOINT: {"huggingface": f"ecmwf/{DEFAULT_CHECKPOINT}"},
-    "aifs-ens-2.0": {"huggingface": f"ecmwf/aifs-ens-2.0"},
-    "aifs-single-1.1": {"huggingface": f"ecmwf/aifs-single-1.1"},
-    "aifs-ens-1.0": {"huggingface": f"ecmwf/aifs-ens-1.0"},
+    "aifs-ens-2.0": {"huggingface": "ecmwf/aifs-ens-2.0"},
+    "aifs-single-1.1": {"huggingface": "ecmwf/aifs-single-1.1"},
+    "aifs-ens-1.0": {"huggingface": "ecmwf/aifs-ens-1.0"},
 }
 
 
@@ -71,7 +71,9 @@ def run_forecast(
     os.environ["ANEMOI_INFERENCE_NUM_CHUNKS"] = str(num_chunks)
 
     if verbose:
-        print(f"🖥️   Device  : {device_label()} \n\n Checkpoint: {checkpoint} \n\n Lead time : {lead_time} h  ({lead_time // 6} steps)")
+        print(
+            f"🖥️   Device  : {device_label()} \n\n Checkpoint: {checkpoint} \n\n Lead time : {lead_time} h  ({lead_time // 6} steps)"
+        )
 
     ckpt = CHECKPOINTS.get(checkpoint, checkpoint)
 
@@ -86,19 +88,22 @@ def run_forecast(
     states: list[dict] = []
     input_state = {"fields": fields, "date": date}
     for state in runner.run(input_states=input_state, lead_time=lead_time):
-        states.append({
-            "date": state["date"],
-            "fields": {k: v.copy() for k, v in state["fields"].items()},
-            "latitudes": state["latitudes"],
-            "longitudes": state["longitudes"]
-        })
+        states.append(
+            {
+                "date": state["date"],
+                "fields": {k: v.copy() for k, v in state["fields"].items()},
+                "latitudes": state["latitudes"],
+                "longitudes": state["longitudes"],
+            }
+        )
         if verbose:
             print(f"    ✓  {state['date']}")
 
-        if verbose:
-            print(f"✅  Done — {len(states)} steps produced.")
+    if verbose:
+        print(f"✅  Done — {len(states)} steps produced.")
 
     return states
+
 
 def run_forecast_streaming(
     fields: dict,
@@ -135,11 +140,11 @@ def run_forecast_streaming(
     for state in runner.run(input_states=input_state, lead_time=lead_time):
         yield {
             "date": state["date"],
-            "fields": {k: v.copy() for k, v in state["fields"].items()}
-    }
+            "fields": {k: v.copy() for k, v in state["fields"].items()},
+        }
 
 
-def save_forecast(states: list[dict], path: str = '../forecasts/output.nc'):
+def save_forecast(states: list[dict], path: str = "../forecasts/output.nc"):
     """
     Save the results of the forecasts as .nc file.
 
@@ -206,12 +211,14 @@ def _load_forecast_nc(path: str):
 
         fields = {var: ds[var].isel(date=i).values for var in ds.keys()}
 
-        states.append({
-            "date": date,
-            "fields": fields,
-            "latitudes": lat,
-            "longitudes": lon,
-        })
+        states.append(
+            {
+                "date": date,
+                "fields": fields,
+                "latitudes": lat,
+                "longitudes": lon,
+            }
+        )
 
     ds.close()
     return states
@@ -228,17 +235,20 @@ def _load_forecast_npz(path: str):
         dates_raw = dates_raw.item()
     dates_raw = np.atleast_1d(dates_raw)
 
-    meta_keys = {"latitudes", "longitudes", "date"}
-    var_names = [k for k in data.files if k not in meta_keys]
+    # Only field arrays are stored with the "field_" prefix in run_forecast.py.
+    # Everything else (latitudes, longitudes, date) is metadata.
+    var_keys = [k for k in data.files if k.startswith("field_")]
 
     states = []
     for i, t in enumerate(dates_raw):
         date = pd.Timestamp(str(t)).to_pydatetime()
-        states.append({
-            "date": date,
-            "fields": { k.replace("field_", "") : data[k] for k,v in data.items() } ,
-            "latitudes": lat,
-            "longitudes": lon,
-        })
+        states.append(
+            {
+                "date": date,
+                "fields": {k.replace("field_", "", 1): data[k] for k in var_keys},
+                "latitudes": lat,
+                "longitudes": lon,
+            }
+        )
 
     return states

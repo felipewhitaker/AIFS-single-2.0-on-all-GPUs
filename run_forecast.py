@@ -8,26 +8,66 @@ def parse_args():
         description="Run an AIFS weather forecast.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("--lead-time",      type=int,  default=24,
-                   help="Forecast horizon in hours (multiple of 6)")
-    p.add_argument("--num-chunks",     type=int,  default=16,
-                   help="Attention chunks (increase to reduce VRAM usage)")
-    p.add_argument("--fields",         nargs="+", default=["2t", "msl", "tcw", "swh"],
-                   help="Fields to plot")
-    p.add_argument("--output-dir",     type=Path, default=Path("outputs"),
-                   help="Directory for output PNG files")
-    p.add_argument("--cache-dir", type=Path, default=Path("../ic_cache"),
-                   help="Directory for IC .npz cache files")
-    p.add_argument("--force-download", action="store_true",
-                   help="Re-download ICs even when a local cache exists")
-    p.add_argument("--list-cache",     action="store_true",
-                   help="Print cached IC dates and exit")
-    p.add_argument("--no-plots",       action="store_true",
-                   help="Skip generating plots")
-    p.add_argument("--dataset-repo", type=str, default=None,
-                   help="HF dataset repo id to upload results to, e.g. 'username/aifs-results'")
-    p.add_argument("--private", action="store_true", default=True,
-                   help="Create the dataset repo as private (default: True)")
+    p.add_argument(
+        "--lead-time",
+        type=int,
+        default=24,
+        help="Forecast horizon in hours (multiple of 6)",
+    )
+    p.add_argument(
+        "--num-chunks",
+        type=int,
+        default=16,
+        help="Attention chunks (increase to reduce VRAM usage)",
+    )
+    p.add_argument(
+        "--fields",
+        nargs="+",
+        default=["2t", "msl", "tcw", "swh"],
+        help="Fields to plot",
+    )
+    p.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("outputs"),
+        help="Directory for output PNG files",
+    )
+    p.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=Path("../ic_cache"),
+        help="Directory for IC .npz cache files",
+    )
+    p.add_argument(
+        "--force-download",
+        action="store_true",
+        help="Re-download ICs even when a local cache exists",
+    )
+    p.add_argument(
+        "--list-cache", action="store_true", help="Print cached IC dates and exit"
+    )
+    p.add_argument("--no-plots", action="store_true", help="Skip generating plots")
+    p.add_argument(
+        "--dataset-repo",
+        type=str,
+        default=None,
+        help="HF dataset repo id to upload results to, e.g. 'username/aifs-results'",
+    )
+    # Two mutually exclusive flags so users can actually make an upload public.
+    privacy = p.add_mutually_exclusive_group()
+    privacy.add_argument(
+        "--private",
+        dest="private",
+        action="store_true",
+        help="Create the dataset repo as private (default)",
+    )
+    privacy.add_argument(
+        "--public",
+        dest="private",
+        action="store_false",
+        help="Create the dataset repo as public",
+    )
+    p.set_defaults(private=True)
     return p.parse_args()
 
 
@@ -36,10 +76,11 @@ def main():
 
     # Lazy import so --help is fast even without heavy deps installed
     import warnings
+
     warnings.filterwarnings("ignore")
 
     from aifs.initial_conditions import load_ics, list_cached
-    from aifs.device import  device_label
+    from aifs.device import device_label
     from aifs.forecast import run_forecast
     import numpy as np
     import matplotlib.pyplot as plt
@@ -84,7 +125,6 @@ def main():
 
     print(f"\n✅  Forecast complete.  {len(states)} steps produced.")
 
-
     # 3. Save the results
     args.output_dir.mkdir(parents=True, exist_ok=True)
     run_id = date.strftime("%Y%m%dT%H%M")
@@ -110,11 +150,17 @@ def main():
         if not args.no_plots:
             for field in args.fields:
                 if field not in state["fields"]:
-                    print(f"  ⚠️  Field '{field}' not in forecast output, skipping plot.")
+                    print(
+                        f"  ⚠️  Field '{field}' not in forecast output, skipping plot."
+                    )
                     continue
                 try:
                     fig = plot_field(state, field)
-                    fig.savefig(run_dir / f"{field}_{step_label}.png", dpi=150, bbox_inches="tight")
+                    fig.savefig(
+                        run_dir / f"{field}_{step_label}.png",
+                        dpi=150,
+                        bbox_inches="tight",
+                    )
                     plt.close(fig)
                 except Exception as e:
                     print(f"  ⚠️  Could not plot {field} at {step_label}: {e}")
@@ -139,9 +185,9 @@ def main():
             folder_path=str(run_dir),
             path_in_repo=f"forecasts/{run_id}",
         )
-        print(f"✅  Uploaded → https://huggingface.co/datasets/{args.dataset_repo}/tree/main/forecasts/{run_id}")
-
-
+        print(
+            f"✅  Uploaded → https://huggingface.co/datasets/{args.dataset_repo}/tree/main/forecasts/{run_id}"
+        )
 
 
 if __name__ == "__main__":
