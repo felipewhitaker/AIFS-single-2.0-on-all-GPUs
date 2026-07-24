@@ -247,7 +247,9 @@ def _build_fields(
 
     # Land-sea mask: set ocean points to NaN for snow depth and soil moisture
     try:
-        lsm = ekd.from_source("file", "lsm.grib")[0].to_numpy(flatten=True)
+        lsm = ekd.from_source(
+            "file", f"{Path(__file__).resolve().parent}/data/lsm.grib"
+        )[0].to_numpy(flatten=True)
         ocean_mask = np.equal(lsm, 0)
         for var in ("sd", "swvl1", "swvl2"):
             if var in fields:
