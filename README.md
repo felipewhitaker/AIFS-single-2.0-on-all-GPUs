@@ -2,29 +2,7 @@
 
 > ### ⚠️ Not officially affiliated with ECMWF
 >
-> This is a **community-contributed** tutorial. It is **not** produced,
-> endorsed or supported by ECMWF. ECMWF's own recommended path for
-> running AIFS is via [`anemoi-inference`](https://github.com/ecmwf/anemoi-inference)
-> as documented on the [official model card](https://huggingface.co/ecmwf/aifs-single-2.0).
->
-> The AIFS model weights are published by ECMWF under a **Creative
-> Commons Attribution 4.0 International (CC BY 4.0)** licence.
-> Forecasts produced with this wrapper are derived from ECMWF Open
-> Data, which is likewise licensed under **CC BY 4.0** and additionally
-> subject to the [ECMWF Terms of Use](https://apps.ecmwf.int/datasets/licences/general/).
-> See the [Licences and attribution](#licences-and-attribution) section
-> below for the wording that **must** accompany any redistribution or
-> publication of these forecasts.
->
 > ### 🚫 Not for operational or safety-critical use
->
-> This wrapper replaces the CUDA-only `flash-attn` kernels with a
-> `torch` SDPA fallback (see [How it works](#how-it-works)). Numerical
-> output may differ from a reference CUDA + flash-attn run, especially
-> on Apple MPS and CPU. Forecasts produced through this repository must
-> **not** be used for aviation, marine navigation, life-safety or any
-> other operational decision-making. See [Operational and safety
-> guidance](#operational-and-safety-guidance).
 
 ---
 
@@ -336,7 +314,10 @@ aifs-tutorial/
   Use explicitly disclaim all liability for accuracy, availability, or
   fitness for any particular purpose, and the SDPA shim in this repository
   introduces additional numerical divergence from the reference AIFS
-  implementation.
+  implementation. This wrapper replaces the CUDA-only `flash-attn` kernels
+  with a `torch` SDPA fallback (see [How it works](#how-it-works)):
+  numerical output may differ from a reference CUDA + flash-attn run,
+  especially on Apple MPS and CPU.
 - **Rate limits.** The ECMWF Open Data portal is limited to
   ~500 simultaneous connections globally. If your download stalls or
   errors, retry with backoff or switch to one of the cloud mirrors (AWS,
@@ -434,8 +415,15 @@ memory in `aifs/compat.py`.
 
 ---
 
-*This tutorial is community-contributed and is not officially affiliated
-with ECMWF. The AIFS model weights are distributed by ECMWF under
-CC BY 4.0; ECMWF Open Data is distributed under CC BY 4.0 and the
-ECMWF Terms of Use. See [Licences and attribution](#licences-and-attribution)
-above.*
+*This tutorial is **community-contributed** and is **not** produced,
+endorsed or supported by ECMWF. ECMWF's own recommended path for running
+AIFS is via [`anemoi-inference`](https://github.com/ecmwf/anemoi-inference)
+as documented on the [official model card](https://huggingface.co/ecmwf/aifs-single-2.0).
+The AIFS model weights are distributed by ECMWF under a **Creative Commons
+Attribution 4.0 International (CC BY 4.0)** licence. Forecasts produced
+with this wrapper are derived from ECMWF Open Data, which is likewise
+licensed under **CC BY 4.0** and additionally subject to the
+[ECMWF Terms of Use](https://apps.ecmwf.int/datasets/licences/general/).
+See [Licences and attribution](#licences-and-attribution) above for the
+wording that **must** accompany any redistribution or publication of these
+forecasts.*
