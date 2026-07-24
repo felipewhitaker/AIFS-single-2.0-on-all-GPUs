@@ -14,7 +14,7 @@ Forecasting:
     :func:`save_forecast`, :func:`load_forecast`
 
 Plotting:
-    :func:`plot_field`, :func:`plot_field_sequence`, :data:`PLOTTABLE`
+    :func:`plot_field`, :data:`PLOTTABLE`
 
 Notes
 -----
@@ -39,7 +39,7 @@ from aifs.forecast import (
     save_forecast,
 )
 from aifs.initial_conditions import list_cached, load_ics
-from aifs.plot import PLOTTABLE, plot_field, plot_field_sequence
+from aifs.plot import PLOTTABLE, plot_field
 
 __all__ = [
     # device
@@ -59,5 +59,4 @@ __all__ = [
     # plotting
     "PLOTTABLE",
     "plot_field",
-    "plot_field_sequence",
 ]

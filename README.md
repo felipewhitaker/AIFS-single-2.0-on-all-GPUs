@@ -206,15 +206,11 @@ for state in states:
 #### 4. Plot Forecast Fields
 
 ```python
-from aifs import plot_field, plot_field_sequence
+from aifs import plot_field
 
 # Single map
 fig = plot_field(states[0], "2t")
 fig.savefig("t2m_T+6h.png", dpi=150)
-
-# Four-panel sequence
-fig = plot_field_sequence(states, "msl", max_steps=4)
-fig.savefig("msl_sequence.png", dpi=150)
 ```
 
 Available fields for plotting:
